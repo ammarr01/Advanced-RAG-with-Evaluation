@@ -11,6 +11,7 @@ from langchain_community.document_loaders import (
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
@@ -40,8 +41,22 @@ def load_all_docs(root_dir):
             skipped.append((path, "unsupported extension"))
             continue
         loader_cls, kwargs = entry
+        doc_id = os.path.relpath(path, root_dir).replace(os.sep, "/")
         try:
-            docs.extend(loader_cls(path, **kwargs).load())
+            loaded = loader_cls(path, **kwargs).load()
+            if not loaded:
+                skipped.append((path, "loader returned no content"))
+                continue
+            # Some loaders (e.g. PyMuPDFLoader) return one Document per page.
+            # Merge into a single per-file Document so char_start/char_end
+            # (added at split time) index into one continuous doc_id text,
+            # matching the other loaders which already return one Document per file.
+            merged_text = "".join(d.page_content for d in loaded)
+            metadata = dict(loaded[0].metadata)
+            metadata.pop("page", None)
+            metadata["source"] = doc_id
+            metadata["doc_id"] = doc_id
+            docs.append(Document(page_content=merged_text, metadata=metadata))
         except Exception as e:
             skipped.append((path, str(e)))
     if skipped:
@@ -58,8 +73,12 @@ else:
     print("Building vectorstore from scratch...")
     docs = load_all_docs(DATA_DIR)
     print(f"Loaded {len(docs)} documents")
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True)
     splits = splitter.split_documents(docs)
+    for split in splits:
+        char_start = split.metadata.pop("start_index")
+        split.metadata["char_start"] = char_start
+        split.metadata["char_end"] = char_start + len(split.page_content)
     print(f"Split into {len(splits)} chunks")
     vectorstore = Chroma.from_documents(documents=splits, embedding=embedding, persist_directory=CHROMA_PATH)
 
