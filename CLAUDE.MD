@@ -2,12 +2,14 @@
 
 ## Status (update this block as phases progress)
 
-- **Current phase:** Phase 0 — repair and freeze the baseline
-- **Frozen:** nothing yet. `src/naive-rag/` becomes frozen once Phase 0 is tagged — do not
-  edit it after that point without flagging it explicitly.
-- **Frozen commit SHA:** _(fill in once Phase 0 is tagged)_
+- **Current phase:** Phase 1 — golden question set
+- **Frozen:** `src/naive-rag/` is frozen as of tag `phase-0` — do not edit it after this
+  point without flagging it explicitly.
+- **Frozen commit SHA:** `92c78257533496d3cb59dabf4553422e498746bc` (tag: `phase-0`)
 - **Golden set status:** not yet created — nothing downstream of Phase 1 is meaningful until
-  `benchmarks/golden_set.jsonl` is hand-verified and frozen.
+  `benchmarks/golden_set.jsonl` is hand-verified and frozen. Each chunk in the frozen
+  vectorstore carries `doc_id` (path relative to `data/`, forward-slashed),
+  `char_start`, `char_end` — gold evidence spans must use the same coordinate system.
 - **Full roadmap:** `docs/roadmap.md` — read it before starting substantive work.
 
 ## What this project is
