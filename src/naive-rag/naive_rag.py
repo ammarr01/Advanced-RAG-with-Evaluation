@@ -1,6 +1,7 @@
 import os
 import glob
 from dotenv import load_dotenv
+from langchain_core.runnables import RunnableParallel
 from langchain_community.document_loaders import (
     PyMuPDFLoader,
     UnstructuredHTMLLoader,
@@ -46,11 +47,7 @@ def load_all_docs(root_dir):
             loaded = loader_cls(path, **kwargs).load()
             if not loaded:
                 skipped.append((path, "loader returned no content"))
-                continue
-            # Some loaders (e.g. PyMuPDFLoader) return one Document per page.
-            # Merge into a single per-file Document so char_start/char_end
-            # (added at split time) index into one continuous doc_id text,
-            # matching the other loaders which already return one Document per file.
+                continue 
             merged_text = "".join(d.page_content for d in loaded)
             metadata = dict(loaded[0].metadata)
             metadata.pop("page", None)
@@ -82,7 +79,7 @@ else:
     print(f"Split into {len(splits)} chunks")
     vectorstore = Chroma.from_documents(documents=splits, embedding=embedding, persist_directory=CHROMA_PATH)
 
-retriever = vectorstore.as_retriever()
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 template = """Answer the question based only on the following context.
 If the context does not contain enough information to answer the question, say "I don't know" and nothing else.
@@ -110,6 +107,17 @@ rag_chain = (
     | prompt
     | llm
     | StrOutputParser()
+)
+
+rag_chain_with_sources = RunnableParallel(
+    {"docs": retriever, "question": RunnablePassthrough()}
+) | RunnablePassthrough.assign(
+    answer=(
+        {"context": lambda x: format_docs(x["docs"]), "question": lambda x: x["question"]}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
 )
 
 if __name__ == "__main__":
