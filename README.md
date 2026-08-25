@@ -23,22 +23,6 @@ liability risk.
 - Evaluated both against the same 50-question, hand-verified test set
 - Reported what actually changed, and what didn't, not just a headline "it's better"
 
-### Project Structure
-├── .env                      # OPENAI_API_KEY
-├── requirements.txt
-├── data/                     # corpus ()
-├── images/                   # images used for case study
-├── benchmarks/
-│   ├── golden_set.jsonl
-│   └── runs/                 # timestamped result files
-├── src/
-│   ├── advanced-rag/
-│   ├── naive-rag/
-│   └── evaluate.py           # raw run file -> scored results
-│   └── run_eval.py           # pipeline + golden set → raw run file
-└── app.py                    # chat UI
-
-
 
 ## Design Decisions
 
