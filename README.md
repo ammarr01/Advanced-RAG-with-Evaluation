@@ -43,10 +43,10 @@ chunk metadata carried through for citations.
 ### Advanced pipeline: targeted fixes
 
 - **Indexing**:
-- Semantic chunking, splitting on meaning rather than fixed character counts
-- Structure-aware parsing, preserving tables and document structure instead
+  - Semantic chunking, splitting on meaning rather than fixed character counts
+  - Structure-aware parsing, preserving tables and document structure instead
   of flattening them during extraction
-- RAPTOR, hierarchical clustering and summarization of chunks for
+  - RAPTOR, hierarchical clustering and summarization of chunks for
   topic-level retrieval
 - **Query translation**: multi-query (rewrites one question into several to
 fix ambiguity) and task decomposition (breaks a question into sub-questions
